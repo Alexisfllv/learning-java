@@ -58,3 +58,46 @@ public T findById(ID id) {
             .orElseThrow(() -> new ModelNotFoundException("ITEM NO ENCONTRADO : "+id));  
 }
 ```
+
+---
+
+## Excepciones Adicionales ,Validaciones , Excepcion Padre
+
+#### extends `ResponseEntityExceptionHandler`
+
+```java
+@RestControllerAdvice  
+public class GlobalErrorHandler extends ResponseEntityExceptionHandler {  
+  
+    // Exception  
+    @ExceptionHandler(Exception.class)  
+    public ResponseEntity<CustomErrorResponse> handleDefaultException(Exception ex , WebRequest req){  
+        CustomErrorResponse error = new CustomErrorResponse  
+                (LocalDateTime.now(), ex.getMessage(),req.getDescription(false));  
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);  
+    }  
+  
+  
+  
+//    // datos mal enviados @Valid  
+//    @ExceptionHandler(MethodArgumentNotValidException.class)  
+//    public ResponseEntity<CustomErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex , WebRequest req){  
+//        CustomErrorResponse error = new CustomErrorResponse  
+//                (LocalDateTime.now(), ex.getMessage(),req.getDescription(false));  
+//        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);  
+//    }  
+  
+  
+    // metodo sobreescrito de ReponseEntityExceptionHandler  
+    @Override  
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest req) {  
+  
+        String message = ex.getBindingResult().getFieldErrors().stream()  
+                .map( error -> error.getField() + " : " + error.getDefaultMessage()).collect(Collectors.joining(","));  
+  
+        CustomErrorResponse error = new CustomErrorResponse  
+                (LocalDateTime.now(), message,req.getDescription(false));  
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);  
+    }  
+}
+```

@@ -36,3 +36,62 @@ public interface ProductRepo extends GenericRepo<Product,Long> {
   
 }
 ```
+
+### Metodos Query para procedure y views
+
+```java
+@Repository  
+public interface SaleRepo extends GenericRepo<Sale,Long> {  
+  
+    // LLAMADA DE VIEW select * from sale;  
+    @Query(value = "select * from fn_sales", nativeQuery = true)  
+    List<Object[]> listadoVentas();  
+  
+    @Query(value = "select * from fn_sales", nativeQuery = true)  
+    List<Venta> listadoVentas2();  
+  
+    // procedure para convertir todo a true en sale  
+    @Procedure(procedureName = "all_true")  
+    void convertirTodasLasVentas();  
+  
+}
+```
+
+## Service Impl
+
+``` java
+@RequiredArgsConstructor  
+@Service  
+public class SaleServiceImpl extends CRUDIMPL<Sale,Long> implements SaleService {  
+  
+    private final SaleRepo saleRepo;  
+  
+  
+    @Override  
+    protected GenericRepo<Sale, Long> getRepo() {  
+        return saleRepo;  
+    }  
+  
+  
+    @Override  
+    public List<Venta_DTO> Ventas() {  
+        return saleRepo.listadoVentas().stream()  
+                .map(e -> new Venta_DTO(  
+                        Integer.parseInt(String.valueOf(e[0])),  
+                        LocalDate.parse(String.valueOf(e[1]), DateTimeFormatter.ofPattern("dd/MM/yyyy"))  
+                ))  
+                .collect(Collectors.toList());  
+    }  
+  
+    @Override  
+    public List<Venta> Ventas2() {  
+        return saleRepo.listadoVentas2();  
+    }  
+  
+    @Transactional  
+    @Override    public void convertirSale() {  
+        saleRepo.convertirTodasLasVentas();  
+    }  
+  
+}
+```
